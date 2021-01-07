@@ -41,4 +41,5 @@ ggplot(activityPerDay, aes(x=Steps)) +
 
 ```
 
+### 3. 
 
