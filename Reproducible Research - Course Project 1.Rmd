@@ -1,0 +1,44 @@
+---
+title: "Johns Hopkins University - Data Science - Reproducible Research"
+author: "Alvaro Lozano Alonso"
+date: "1/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(hrbrthemes)
+```
+
+### 1.Code for reading in the dataset and/or processing the data.
+```{r}
+setwd("/Users/alvarolozanoalonso/Documents/Dokumente - MacBook Air/Data Science with R - Johns Hopkins University/Reproducible Research/Johns Hopkins University - Data Science - Reproducible Research")
+activity <- read.csv("activity.csv", header=TRUE, sep=",")
+head(activity)
+str(activity)
+# sum(is.na(activity))
+```
+
+### 2.Histogram of the total number of steps taken each day.
+```{r}
+activityPerDay <- aggregate(activity$steps, by=list(Category=activity$date), FUN=sum)
+names(activityPerDay) <- c("Day", "Steps")
+hist(activityPerDay$Steps, breaks=20)
+
+
+ggplot(activityPerDay, aes(x=Steps)) + 
+  geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9) +
+  ylab("Frequency") +
+  xlab("Steps") +
+  ggtitle("Histogram steps per day")
+
+```
+
+
