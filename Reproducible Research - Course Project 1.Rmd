@@ -14,32 +14,125 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
-library(hrbrthemes)
+library(lubridate)
 ```
 
-### 1.Code for reading in the dataset and/or processing the data.
+### 1. Code for reading in the dataset and/or processing the data.
 ```{r}
-setwd("/Users/alvarolozanoalonso/Documents/Dokumente - MacBook Air/Data Science with R - Johns Hopkins University/Reproducible Research/Johns Hopkins University - Data Science - Reproducible Research")
+setwd("~/Documents/Dokumente - MacBook Air/Data Science with R - Johns Hopkins University/Reproducible Research/JHU-Data_Science-Reproducible_Research")
 activity <- read.csv("activity.csv", header=TRUE, sep=",")
 head(activity)
 str(activity)
 # sum(is.na(activity))
 ```
 
-### 2.Histogram of the total number of steps taken each day.
+### 2. Histogram of the total number of steps taken each day.
 ```{r}
-activityPerDay <- aggregate(activity$steps, by=list(Category=activity$date), FUN=sum)
-names(activityPerDay) <- c("Day", "Steps")
-hist(activityPerDay$Steps, breaks=20)
-
+activityPerDay <- activity %>% group_by(date) %>% summarise(Steps = sum(steps, na.rm=TRUE))
 
 ggplot(activityPerDay, aes(x=Steps)) + 
   geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9) +
   ylab("Frequency") +
   xlab("Steps") +
   ggtitle("Histogram steps per day")
-
 ```
 
-### 3. 
+### 3. Mean and median number of steps taken each day.
+```{r}
+stepsPerDayMean <- activity %>% group_by(date) %>% summarise(Mean = mean(steps, na.rm=TRUE))
+stepsPerDayMedian <- activity %>% group_by(date) %>% summarise(Median = median(steps, na.rm=TRUE))
+```
+
+### 4. Time series plot of the average number of steps taken.
+```{r}
+stepsPerIntervalAverage <- activity %>% group_by(interval) %>% summarise(StepsAverage = mean(steps, na.rm=TRUE))
+
+ggplot(stepsPerIntervalAverage, aes(x=interval, y=StepsAverage)) +
+  geom_line(color="#69b3a2", alpha=0.9) + 
+  xlab("Interval") +
+  ggtitle("Time series of the average number of steps")
+```
+### 5. The 5-minute interval that, on average, contains the maximum number of steps.
+```{r}
+maxSteps <- max(stepsPerIntervalAverage[,2])
+interval <- stepsPerIntervalAverage[which(stepsPerIntervalAverage$StepsAverage == maxSteps), 1]
+interval
+```
+### 6. Code to describe and show a strategy for imputing missing data.
+```{r}
+sum(is.na(activity$steps))
+
+activity.noNA <- activity
+sum(is.na(activity.noNA$steps))
+
+for (i in 1:length(activity.noNA$steps)) {
+  if (is.na(activity.noNA[i, 1])) {
+     activity.noNA[i, 1] <- stepsPerIntervalAverage[match(activity.noNA[i, 3], stepsPerIntervalAverage$interval), 2]
+  }
+}
+```
+
+### 7. Histogram of the total number of steps taken each day after missing values are imputed.
+```{r}
+activityPerDay.noNA <- activity.noNA %>% group_by(date) %>% summarise(Steps = sum(steps, na.rm=TRUE))
+
+ggplot(activityPerDay.noNA, aes(x=Steps)) + 
+  geom_histogram(fill="#69b3a2", color="#e9ecef", alpha=0.9) +
+  ylab("Frequency") +
+  xlab("Steps") +
+  ggtitle("Histogram steps per day")
+
+stepsPerDayMean.noNA <- activity.noNA %>% group_by(date) %>% summarise(Mean = mean(steps, na.rm=TRUE))
+stepsPerDayMedian.noNA <- activity.noNA %>% group_by(date) %>% summarise(Median = median(steps, na.rm=TRUE))
+```
+```{r}
+ggplot(stepsPerDayMean, aes(x=date, y=Mean)) + 
+  geom_bar(fill="#69b3a2", stat = "identity") + 
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+ggplot(stepsPerDayMean.noNA, aes(x=date, y=Mean)) + 
+  geom_bar(fill="#69b3a2", stat = "identity") + 
+  theme(axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+```
+  
+### 8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends.
+
+```{r}
+activity.noNA$date <- ymd(activity.noNA$date)
+activity.noNA$weekday <- weekdays(activity.noNA$date)
+activity.noNA$daytype <- ifelse(activity.noNA$weekday %in% c("Saturday", "Sunday"), "Weekend", "Weekday")
+activity.noNA$daytype <- as.factor(activity.noNA$daytype)
+```
+
+
+
+
+
+
+```{r}
+stepsPerIntervalAverage.noNA.weekdays <- activity.noNA %>% filter(daytype=="Weekday") %>% group_by(interval) %>% summarise(StepsAverage = mean(steps, na.rm=TRUE))
+
+stepsPerIntervalAverage.noNA.weekends <- activity.noNA %>% filter(daytype=="Weekend") %>% group_by(interval) %>% summarise(StepsAverage = mean(steps, na.rm=TRUE))
+
+ggplot(stepsPerIntervalAverage.noNA.weekdays, aes(x=interval, y=StepsAverage)) +
+  geom_line(color="#69b3a2", alpha=0.9) + 
+  xlab("Interval") +
+  ggtitle("Time series of the average number of steps")
+
+ggplot(stepsPerIntervalAverage.noNA.weekends, aes(x=interval, y=StepsAverage)) +
+  geom_line(color="#69b3a2", alpha=0.9) + 
+  xlab("Interval") +
+  ggtitle("Time series of the average number of steps")
+```
+
+
+
+
+
+
+
+
+
 
